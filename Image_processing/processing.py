@@ -136,41 +136,9 @@ def qimage_to_bgr(image: QImage) -> tuple[np.ndarray, bool]:
     return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR), False
 
 
-print("hé hế") 
-
 def bgr_to_qimage(image: np.ndarray, is_gray: bool) -> QImage:
     """Chuyển ảnh OpenCV BGR hoặc xám về QImage."""
     if is_gray:
         return QImage(image.data, image.shape[1], image.shape[0], image.strides[0], QImage.Format.Format_Grayscale8).copy()
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return QImage(rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], QImage.Format.Format_RGB888).copy()
-
-#--------------------------------M3(Quân Bảo)--------------------------------
-conssajsadjksadjlksad
-sadjaklsdjaskjd
-sdlsalkdjaslkdjsa
-sadlksadjklaajajajajajjajajaa
-sdklsakdlajdsakjdslka
-asdsadasdadadsa
-adadada
-Falsefa
-f
-af
-afa
-fafaf
-and
-
-
-#----------------------------------------------------------------------------
-als;faslf
-à
-á
-fa
-sd
-fas
-fwa
-f
-à
-a
-fe
-áef
