@@ -1,7 +1,4 @@
-"""M1 - Thông tin ảnh, cắt, đổi kích thước và giảm mức xám.
 
-Chỉ hàm ``reduce_gray_levels`` là phần [TC] để sinh viên tự cài đặt.
-"""
 
 from __future__ import annotations
 
@@ -19,7 +16,7 @@ from PySide6.QtWidgets import (
 
 IMAGE_FILTER = "Ảnh (*.png *.jpg *.jpeg *.bmp *.webp *.tif *.tiff)"
 
-print("hé hế")
+
 class ImageCanvas(QLabel):
     """Vùng xem ảnh hỗ trợ chọn vùng cắt hoặc lấy màu tại một điểm."""
 
@@ -195,7 +192,7 @@ class AdjustmentDialog(QDialog):
     def __init__(self, window: "Window") -> None:
         super().__init__(window)
         self.window = window
-        self.setWindowTitle("M2 - Điều chỉnh độ sáng, tương phản và histogram")
+        self.setWindowTitle("Điều chỉnh độ sáng, tương phản và histogram")
         self.setMinimumWidth(530)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Mỗi thao tác áp dụng trực tiếp lên ảnh hiện tại. Dùng Ctrl+R để quay về ảnh gốc."))
@@ -333,7 +330,7 @@ class Window(QMainWindow):
         self.resize_action = QAction("Đổi kích thước", self, triggered=self.resize_image)
         self.reduce_action = QAction("Giảm mức xám [TC]", self, triggered=self.reduce_levels)
         self.picker_action = QAction("Ống hút màu", self, triggered=self.toggle_picker_mode)
-        self.adjust_action = QAction("Điều chỉnh M2...", self, shortcut="Ctrl+J", triggered=self.open_adjustment_dialog)
+        self.adjust_action = QAction("Điều chỉnh ", self, shortcut="Ctrl+J", triggered=self.open_adjustment_dialog)
 
     def _create_menu(self) -> None:
         file_menu = self.menuBar().addMenu("Tệp")
@@ -447,7 +444,7 @@ class Window(QMainWindow):
         return line
 
     def _create_workspace_ui(self) -> None:
-        """Bố cục ổn định cho toàn bộ M1-M8: điều hướng, canvas, bảng công cụ."""
+        """điều hướng, canvas, bảng công cụ."""
         root = QWidget()
         root_layout = QVBoxLayout(root)
         root_layout.setContentsMargins(20, 16, 20, 18)
@@ -457,7 +454,7 @@ class Window(QMainWindow):
         identity = QVBoxLayout()
         title = QLabel("PhotoRestore")
         title.setObjectName("appTitle")
-        subtitle = QLabel("Đồ án xử lý ảnh số · Không gian làm việc M1-M8")
+        subtitle = QLabel("Đồ án xử lý ảnh số · Không gian làm việc")
         subtitle.setObjectName("subtitle")
         identity.addWidget(title)
         identity.addWidget(subtitle)
@@ -483,7 +480,7 @@ class Window(QMainWindow):
         workspace_layout = QVBoxLayout(workspace)
         workspace_layout.setContentsMargins(14, 14, 14, 14)
         workspace_layout.setSpacing(10)
-        self.workspace_title = QLabel("M1 · Ảnh và thao tác cơ bản")
+        self.workspace_title = QLabel("Ảnh và thao tác cơ bản")
         self.workspace_title.setObjectName("workspaceTitle")
         self.workspace_note = QLabel("Chọn công cụ trong bảng bên phải hoặc từ menu Ảnh.")
         self.workspace_note.setObjectName("workspaceNote")
@@ -513,14 +510,14 @@ class Window(QMainWindow):
         layout.addWidget(label)
         self.module_buttons: list[QPushButton] = []
         module_names = [
-            "M1  ·  Ảnh cơ bản",
-            "M2  ·  Điều chỉnh ảnh",
-            "M3  ·  Sắp phát triển",
-            "M4  ·  Sắp phát triển",
-            "M5  ·  Sắp phát triển",
-            "M6  ·  Sắp phát triển",
-            "M7  ·  Sắp phát triển",
-            "M8  ·  Sắp phát triển",
+            "Ảnh cơ bản",
+            "Điều chỉnh ảnh",
+            "Sắp phát triển",
+            "Sắp phát triển",
+            "Sắp phát triển",
+            "Sắp phát triển",
+            "Sắp phát triển",
+            "Sắp phát triển",
         ]
         for index, name in enumerate(module_names):
             button = QPushButton(name)
@@ -701,8 +698,8 @@ class Window(QMainWindow):
         for button_index, button in enumerate(self.module_buttons):
             button.setChecked(button_index == index)
         titles = [
-            ("M1 · Ảnh và thao tác cơ bản", "Thông tin ảnh, ảnh xám, cắt, đổi kích thước, giảm mức xám và ống hút màu."),
-            ("M2 · Điều chỉnh độ sáng, tương phản và histogram", "Âm bản, Log, Gamma, kéo giãn tương phản, cân bằng histogram và CLAHE."),
+            ("Ảnh và thao tác cơ bản", "Thông tin ảnh, ảnh xám, cắt, đổi kích thước, giảm mức xám và ống hút màu."),
+            ("Điều chỉnh độ sáng, tương phản và histogram", "Âm bản, Log, Gamma, kéo giãn tương phản, cân bằng histogram và CLAHE."),
         ]
         title, note = titles[index] if index < 2 else (f"M{index + 1} · Sẵn sàng phát triển", "Canvas được dùng chung; hãy thêm công cụ của mô-đun vào bảng bên phải.")
         self.workspace_title.setText(title)
