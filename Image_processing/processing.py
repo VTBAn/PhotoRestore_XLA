@@ -142,4 +142,3 @@ def bgr_to_qimage(image: np.ndarray, is_gray: bool) -> QImage:
         return QImage(image.data, image.shape[1], image.shape[0], image.strides[0], QImage.Format.Format_Grayscale8).copy()
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return QImage(rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], QImage.Format.Format_RGB888).copy()
-print("Đã tải mô-đun xử lý ảnh PhotoRestore.")
