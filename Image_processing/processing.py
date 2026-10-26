@@ -144,5 +144,19 @@ def bgr_to_qimage(image: np.ndarray, is_gray: bool) -> QImage:
     return QImage(rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], QImage.Format.Format_RGB888).copy()
 
 #--------------------------------M3(Quân Bảo)--------------------------------
+conssajsadjksadjlksad
+sadjaklsdjaskjd
+sdlsalkdjaslkdjsa
+sadlksadjklaajajajajajjajajaa
+sdklsakdlajdsakjdslka
+asdsadasdadadsa
+adadada
+Falsefa
+f
+af
+afa
+fafaf
+and
+
 
 #----------------------------------------------------------------------------
