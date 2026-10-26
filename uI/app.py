@@ -16,10 +16,10 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QSlider,
     QSpinBox, QDoubleSpinBox, QScrollArea, QStackedWidget, QStatusBar, QTabWidget, QVBoxLayout, QWidget,
 )
-print("Hé")
+
 IMAGE_FILTER = "Ảnh (*.png *.jpg *.jpeg *.bmp *.webp *.tif *.tiff)"
 
-
+print("hé hế")
 class ImageCanvas(QLabel):
     """Vùng xem ảnh hỗ trợ chọn vùng cắt hoặc lấy màu tại một điểm."""
 
