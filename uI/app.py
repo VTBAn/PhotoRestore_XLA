@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from Image_processing import processing
+from Image_processing import M345
 from PySide6.QtCore import QPoint, QRect, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QIcon, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
@@ -301,6 +302,202 @@ class AdjustmentDialog(QDialog):
         layout.addStretch()
         return tab
 
+class FilterDialog(QDialog):
+    """M3: điều chỉnh tham số và xem trước bộ lọc."""
+
+    FILTER_NAMES = {
+        "mean": "Lọc trung bình",
+        "gaussian": "Lọc Gaussian",
+        "median": "Lọc trung vị",
+        "laplacian": "Sắc nét Laplacian",
+        "unsharp": "Unsharp masking",
+    }
+
+    def __init__(self, window: "Window", filter_name: str) -> None:
+        super().__init__(window)
+
+        self.filter_name = filter_name
+
+        # Mỗi lần xem trước đều xử lý từ bản ảnh này.
+        self.source_image = window.image.copy()
+        self.result_image: Optional[QImage] = None
+
+        self.setWindowTitle(self.FILTER_NAMES[filter_name])
+        self.resize(1000, 650)
+
+        layout = QVBoxLayout(self)
+
+        note = QLabel(
+            "Kéo thanh trượt để xem trước. "
+            "Chọn OK để áp dụng hoặc Cancel để giữ ảnh hiện tại."
+        )
+        note.setWordWrap(True)
+        layout.addWidget(note)
+
+        # Hai vùng xem ảnh trước và sau.
+        previews = QHBoxLayout()
+
+        before_layout = QVBoxLayout()
+        before_layout.addWidget(QLabel("Trước xử lý"))
+        self.before_canvas = ImageCanvas()
+        self.before_canvas.setMinimumSize(360, 280)
+        self.before_canvas.set_image(self.source_image)
+        before_layout.addWidget(self.before_canvas)
+
+        after_layout = QVBoxLayout()
+        after_layout.addWidget(QLabel("Xem trước kết quả"))
+        self.after_canvas = ImageCanvas()
+        self.after_canvas.setMinimumSize(360, 280)
+        after_layout.addWidget(self.after_canvas)
+
+        previews.addLayout(before_layout, 1)
+        previews.addLayout(after_layout, 1)
+        layout.addLayout(previews, 1)
+
+        self.kernel_sizes = (3, 5, 7, 9)
+
+        if filter_name in ("mean", "gaussian", "median", "unsharp"):
+            default_index = 1 if filter_name == "unsharp" else 0
+
+            self.kernel_slider, self.kernel_label = self._add_slider(
+                layout,
+                minimum=0,
+                maximum=3,
+                value=default_index,
+            )
+
+        if filter_name in ("gaussian", "unsharp"):
+            # Giá trị nguyên 5..50 tương ứng sigma 0.5..5.0.
+            self.sigma_slider, self.sigma_label = self._add_slider(
+                layout,
+                minimum=5,
+                maximum=50,
+                value=10,
+            )
+
+        if filter_name == "laplacian":
+            # Giá trị nguyên 0..100 tương ứng c 0.00..1.00.
+            self.c_slider, self.c_label = self._add_slider(
+                layout,
+                minimum=0,
+                maximum=100,
+                value=20,
+            )
+
+        if filter_name == "unsharp":
+            # Giá trị nguyên 0..300 tương ứng k 0.00..3.00.
+            self.k_slider, self.k_label = self._add_slider(
+                layout,
+                minimum=0,
+                maximum=300,
+                value=100,
+            )
+
+        self.error_label = QLabel()
+        self.error_label.setWordWrap(True)
+        layout.addWidget(self.error_label)
+
+        self.buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        layout.addWidget(self.buttons)
+
+        self._update_preview()
+
+    def _add_slider(
+        self,
+        layout: QVBoxLayout,
+        minimum: int,
+        maximum: int,
+        value: int,
+    ) -> tuple[QSlider, QLabel]:
+        label = QLabel()
+        slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(minimum, maximum)
+        slider.setValue(value)
+
+        layout.addWidget(label)
+        layout.addWidget(slider)
+
+        slider.valueChanged.connect(self._update_preview)
+
+        return slider, label
+
+    def _update_preview(self, _value: int = 0) -> None:
+        kernel_size = 3
+        sigma = 1.0
+
+        if hasattr(self, "kernel_slider"):
+            kernel_size = self.kernel_sizes[self.kernel_slider.value()]
+            self.kernel_label.setText(
+                f"Kích thước cửa sổ: {kernel_size} × {kernel_size}"
+            )
+
+        if hasattr(self, "sigma_slider"):
+            sigma = self.sigma_slider.value() / 10.0
+            self.sigma_label.setText(f"Sigma σ = {sigma:.1f}")
+
+        try:
+            if self.filter_name == "mean":
+                result = M345.mean_filter(
+                    self.source_image,
+                    kernel_size,
+                )
+
+            elif self.filter_name == "gaussian":
+                result = M345.gaussian_filter(
+                    self.source_image,
+                    kernel_size,
+                    sigma,
+                )
+
+            elif self.filter_name == "median":
+                result = M345.median_filter(
+                    self.source_image,
+                    kernel_size,
+                )
+
+            elif self.filter_name == "laplacian":
+                c = self.c_slider.value() / 100.0
+                self.c_label.setText(f"Hệ số c = {c:.2f}")
+
+                result = M345.laplacian_sharpen(
+                    self.source_image,
+                    c,
+                )
+
+            elif self.filter_name == "unsharp":
+                k = self.k_slider.value() / 100.0
+                self.k_label.setText(f"Hệ số k = {k:.2f}")
+
+                result = M345.unsharp_masking(
+                    self.source_image,
+                    kernel_size,
+                    sigma,
+                    k,
+                )
+
+            else:
+                raise ValueError("Bộ lọc không hợp lệ.")
+
+        except (ValueError, processing.cv2.error) as error:
+            self.result_image = None
+            self.after_canvas.set_image(None)
+            self.error_label.setText(f"Không thể xử lý: {error}")
+            self.buttons.button(
+                QDialogButtonBox.StandardButton.Ok
+            ).setEnabled(False)
+            return
+
+        self.result_image = result
+        self.after_canvas.set_image(result)
+        self.error_label.clear()
+        self.buttons.button(
+            QDialogButtonBox.StandardButton.Ok
+        ).setEnabled(True)
 
 class Window(QMainWindow):
     def __init__(self) -> None:
@@ -341,6 +538,17 @@ class Window(QMainWindow):
         adjust_menu.addAction(self.adjust_action)
         tools_menu = self.menuBar().addMenu("Công cụ")
         tools_menu.addAction(self.picker_action)
+        filter_menu = self.menuBar().addMenu("Bộ lọc")
+
+        for filter_name, title in FilterDialog.FILTER_NAMES.items():
+            action = QAction(title, self)
+
+            action.triggered.connect(
+                lambda checked=False, name=filter_name:
+                    self.open_filter_dialog(name)
+            )
+
+            filter_menu.addAction(action)
 
     def _create_ui(self) -> None:
         self._create_workspace_ui()
@@ -512,7 +720,7 @@ class Window(QMainWindow):
         module_names = [
             "Ảnh cơ bản",
             "Điều chỉnh ảnh",
-            "Sắp phát triển",
+            "Bộ lọc làm mịn sắc nét",
             "Sắp phát triển",
             "Sắp phát triển",
             "Sắp phát triển",
@@ -557,8 +765,12 @@ class Window(QMainWindow):
         self.module_stack = QStackedWidget()
         self.module_stack.addWidget(self._create_m1_tools())
         self.module_stack.addWidget(self._create_m2_tools())
-        for number in range(3, 9):
-            self.module_stack.addWidget(self._create_placeholder_tools(number))
+        self.module_stack.addWidget(self._create_m3_tools())
+
+        for number in range(4, 9):
+            self.module_stack.addWidget(
+                self._create_placeholder_tools(number)
+            )
         scroll.setWidget(self.module_stack)
         layout.addWidget(scroll, 1)
         return panel
@@ -695,13 +907,37 @@ class Window(QMainWindow):
 
     def select_module(self, index: int) -> None:
         self.module_stack.setCurrentIndex(index)
+
         for button_index, button in enumerate(self.module_buttons):
             button.setChecked(button_index == index)
+
         titles = [
-            ("Ảnh và thao tác cơ bản", "Thông tin ảnh, ảnh xám, cắt, đổi kích thước, giảm mức xám và ống hút màu."),
-            ("Điều chỉnh độ sáng, tương phản và histogram", "Âm bản, Log, Gamma, kéo giãn tương phản, cân bằng histogram và CLAHE."),
+            (
+                "M1 · Ảnh và thao tác cơ bản",
+                "Thông tin ảnh, ảnh xám, cắt, đổi kích thước, "
+                "giảm mức xám và ống hút màu.",
+            ),
+            (
+                "M2 · Điều chỉnh độ sáng, tương phản và histogram",
+                "Âm bản, Log, Gamma, kéo giãn tương phản, "
+                "cân bằng histogram và CLAHE.",
+            ),
+            (
+                "M3 · Bộ lọc",
+                "Làm mịn và làm sắc nét bằng Trung bình, Gaussian, "
+                "Trung vị, Laplacian và Unsharp masking.",
+            ),
         ]
-        title, note = titles[index] if index < 2 else (f"M{index + 1} · Sẵn sàng phát triển", "Canvas được dùng chung; hãy thêm công cụ của mô-đun vào bảng bên phải.")
+
+        if index < len(titles):
+            title, note = titles[index]
+        else:
+            title = f"M{index + 1} · Sẵn sàng phát triển"
+            note = (
+                "Canvas được dùng chung; hãy thêm công cụ "
+                "của mô-đun vào bảng bên phải."
+            )
+
         self.workspace_title.setText(title)
         self.workspace_note.setText(note)
         self.inspector_title.setText(title)
@@ -950,3 +1186,51 @@ class Window(QMainWindow):
             #imageCanvas { background: white; border: 2px dashed #c8d6eb; border-radius: 10px; color: #74839a; font-size: 15px; }
             QStatusBar { background: white; color: #64748b; border-top: 1px solid #dbe4f1; }
         """)
+    """M3"""
+    def open_filter_dialog(self, filter_name: str) -> None:
+        """Mở hộp thoại M3 và nhận kết quả khi người dùng chọn OK."""
+        if not self._require_image():
+            return
+
+        self.select_module(2)
+
+        dialog = FilterDialog(self, filter_name)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        if dialog.result_image is None:
+            return
+
+        self.image = dialog.result_image.copy()
+
+        name = FilterDialog.FILTER_NAMES[filter_name]
+        self._refresh_image(f"Đã áp dụng {name}.")
+
+    def _create_m3_tools(self) -> QWidget:
+        """Tạo bảng công cụ M3 ở bên phải."""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(16, 8, 16, 16)
+        layout.setSpacing(10)
+
+        description = QLabel(
+            "Chọn bộ lọc để điều chỉnh tham số bằng thanh trượt "
+            "và xem ảnh trước/sau."
+        )
+        description.setWordWrap(True)
+        layout.addWidget(description)
+
+        for filter_name, title in FilterDialog.FILTER_NAMES.items():
+            button = QPushButton(title)
+            button.setObjectName("toolButton")
+            button.clicked.connect(
+                lambda checked=False, name=filter_name:
+                    self.open_filter_dialog(name)
+            )
+            layout.addWidget(button)
+
+        layout.addStretch()
+        return page
+
+    
