@@ -136,6 +136,8 @@ def qimage_to_bgr(image: QImage) -> tuple[np.ndarray, bool]:
     return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR), False
 
 
+print("hé hế") 
+
 def bgr_to_qimage(image: np.ndarray, is_gray: bool) -> QImage:
     """Chuyển ảnh OpenCV BGR hoặc xám về QImage."""
     if is_gray:
